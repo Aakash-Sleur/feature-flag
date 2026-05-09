@@ -7,14 +7,14 @@ interface LogData {
   method: string;
   url: string;
   ip: string;
-  userAgent?: string;
-  userId?: string;
-  userRole?: string;
+  userAgent: string | undefined;
+  userId: string | undefined;
+  userRole: string | undefined;
   requestId: string;
   timestamp: string;
-  body?: any;
-  query?: any;
-  params?: any;
+  body?: Record<string, unknown>;
+  query?: Record<string, unknown>;
+  params?: Record<string, unknown>;
 }
 
 // Generate unique request ID
@@ -34,17 +34,13 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
   const logData: LogData = {
     method: req.method,
     url: req.url,
-    ip: req.ip || req.connection.remoteAddress || 'unknown',
+    ip: req.ip || req.socket.remoteAddress || 'unknown',
     userAgent: req.get('User-Agent'),
+    userId: req.user?.userId,
+    userRole: req.user?.role,
     requestId,
     timestamp: new Date().toISOString(),
   };
-  
-  // Add user info if available (after auth middleware)
-  if (req.user) {
-    logData.userId = req.user.userId;
-    logData.userRole = req.user.role;
-  }
   
   // Log request body for POST/PUT/PATCH (excluding sensitive data)
   if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
@@ -63,23 +59,20 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
   
   // Log query parameters
   if (Object.keys(req.query).length > 0) {
-    logData.query = req.query;
+    logData.query = req.query as Record<string, unknown>;
   }
   
   // Log route parameters
   if (Object.keys(req.params).length > 0) {
-    logData.params = req.params;
+    logData.params = req.params as Record<string, unknown>;
   }
   
   // Log incoming request
-  logger.info(`Incoming Request: ${req.method} ${req.url}`, { 
-    requestId,
-    ...logData 
-  });
+  logger.info(`Incoming Request: ${req.method} ${req.url}`, logData);
   
   // Override res.json to log response
-  const originalJson = res.json;
-  res.json = function(body: any) {
+  const originalJson = res.json.bind(res);
+  res.json = function(body: unknown) {
     const endTime = Date.now();
     const duration = endTime - startTime;
     
@@ -109,7 +102,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
       logger.info(`Response Success: ${req.method} ${req.url} - ${res.statusCode}`, responseLogData);
     }
     
-    return originalJson.call(this, body);
+    return originalJson(body);
   };
   
   next();
@@ -130,7 +123,7 @@ export const errorLogger = (error: Error, req: Request, res: Response, next: Nex
     url: req.url,
     userId: req.user?.userId || 'anonymous',
     userRole: req.user?.role || 'none',
-    ip: req.ip || req.connection.remoteAddress || 'unknown',
+    ip: req.ip || req.socket.remoteAddress || 'unknown',
     userAgent: req.get('User-Agent'),
   });
   

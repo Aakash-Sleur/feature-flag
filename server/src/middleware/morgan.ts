@@ -14,22 +14,16 @@ morgan.token('user-role', (req: Request) => {
   return req.user?.role || 'none';
 });
 
-// Custom token for response time in a more readable format
-morgan.token('response-time-ms', (req: Request, res: Response) => {
-  const responseTime = morgan['response-time'](req, res);
-  return responseTime ? `${responseTime}ms` : '-';
-});
-
 // Custom token for request body size
 morgan.token('req-size', (req: Request) => {
   return req.get('content-length') || '0';
 });
 
 // Define custom format for development
-const developmentFormat = ':method :url :status :response-time-ms - :res[content-length] bytes - User: :user-id (:user-role)';
+const developmentFormat = ':method :url :status :response-time - :res[content-length] bytes - User: :user-id (:user-role)';
 
 // Define custom format for production
-const productionFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time-ms - User: :user-id (:user-role)';
+const productionFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time - User: :user-id (:user-role)';
 
 // Create stream object with write function that will be used by morgan
 const stream = {
@@ -43,14 +37,14 @@ const stream = {
 };
 
 // Skip logging for certain conditions
-const skip = (req: Request, res: Response) => {
+const skip = () => {
   // Skip health check endpoints in production
-  if (process.env.NODE_ENV === 'production' && req.url === '/api/health') {
+  if (process.env.NODE_ENV === 'production' && process.env.VERCEL === '1') {
     return true;
   }
   
   // Skip successful requests in production (only log errors and warnings)
-  if (process.env.NODE_ENV === 'production' && res.statusCode < 400) {
+  if (process.env.NODE_ENV === 'production' && process.env.VERCEL !== '1') {
     return true;
   }
   
@@ -58,7 +52,8 @@ const skip = (req: Request, res: Response) => {
 };
 
 // Create morgan middleware
-const morganMiddleware: morgan.Morgan<Request, Response> = morgan(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const morganMiddleware: any = morgan(
   process.env.NODE_ENV === 'production' ? productionFormat : developmentFormat,
   {
     stream,
