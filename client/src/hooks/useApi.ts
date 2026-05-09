@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react"
 import apiClient from "@/lib/api-client"
-import { AxiosError } from "axios"
 
 interface UseApiOptions {
   onSuccess?: () => void

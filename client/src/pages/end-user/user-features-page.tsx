@@ -11,27 +11,6 @@ import type { FeatureFlagData } from "../organization-admin/feature-flags"
 import { featureFlagAPI } from "@/services/feature-flag.service"
 import { toast } from "sonner"
 
-const initialFeatures = [
-  {
-    id: "1",
-    name: "New Dashboard",
-    key: "new_dashboard",
-    enabled: true,
-  },
-  {
-    id: "2",
-    name: "Beta Checkout",
-    key: "beta_checkout",
-    enabled: false,
-  },
-  {
-    id: "3",
-    name: "Experimental Search",
-    key: "experimental_search",
-    enabled: true,
-  },
-]
-
 export function UserFeaturesPage() {
   const [flags, setFlags] = useState<FeatureFlagData[]>([])
   const [loading, setLoading] = useState(true)

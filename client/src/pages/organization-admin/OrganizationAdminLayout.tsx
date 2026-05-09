@@ -2,42 +2,19 @@
 
 import { useUser } from "@/context/user-context"
 
-import {
-  Flag,
-  LogOut,
-} from "lucide-react"
+import { Flag, LogOut } from "lucide-react"
 
-import {
-  Link,
-  Navigate,
-  NavLink,
-  Outlet,
-} from "react-router-dom"
+import { Link, Navigate, Outlet } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 
-const navigation = [
-  {
-    label: "Feature Flags",
-    href: "/org/feature-flags",
-    icon: Flag,
-  },
-]
-
 const OrgAdminLayout = () => {
-  const {
-    isLoading,
-    isAuthenticated,
-    user,
-    logout,
-  } = useUser()
+  const { isLoading, isAuthenticated, user, logout } = useUser()
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">
-          Loading...
-        </p>
+        <p className="text-muted-foreground">Loading...</p>
       </div>
     )
   }
@@ -49,12 +26,7 @@ const OrgAdminLayout = () => {
 
   // INVALID ROLE
   if (user?.role !== "ORG_ADMIN") {
-    return (
-      <Navigate
-        to="/unauthorized"
-        replace
-      />
-    )
+    return <Navigate to="/unauthorized" replace />
   }
 
   return (
@@ -66,23 +38,17 @@ const OrgAdminLayout = () => {
           <div className="flex items-center gap-10">
             <Link
               to="/org/dashboard"
-              className="font-heading flex items-center text-xl font-bold tracking-tight"
+              className="flex items-center font-heading text-xl font-bold tracking-tight"
             >
-              <Flag fill="black" className="text-sm mr-2"/>
-            <span>
-
-              Feature Flags
-            </span>
+              <Flag fill="black" className="mr-2 text-sm" />
+              <span>Feature Flags</span>
             </Link>
-
           </div>
 
           {/* RIGHT */}
           <div className="flex items-center gap-4">
             <div className="hidden text-right md:block">
-              <p className="text-sm font-medium">
-                {user.name}
-              </p>
+              <p className="text-sm font-medium">{user.name}</p>
 
               <p className="text-xs text-muted-foreground">
                 Organization Admin

@@ -3,7 +3,6 @@
 import { useUser } from "@/context/user-context"
 
 import {
-  Flag,
   LogOut,
 } from "lucide-react"
 
