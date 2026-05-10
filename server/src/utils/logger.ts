@@ -52,30 +52,35 @@ const fileFormat = winston.format.combine(
 );
 
 // Define transports
-const transports = [
+const transports: winston.transport[] = [
   // Console transport
   new winston.transports.Console({
     level: level(),
     format: logFormat,
   }),
-  
-  // Error log file
-  new winston.transports.File({
-    filename: path.join(__dirname, '../../logs/error.log'),
-    level: 'error',
-    format: fileFormat,
-    maxsize: 5242880, // 5MB
-    maxFiles: 5,
-  }),
-  
-  // Combined log file
-  new winston.transports.File({
-    filename: path.join(__dirname, '../../logs/combined.log'),
-    format: fileFormat,
-    maxsize: 5242880, // 5MB
-    maxFiles: 5,
-  }),
 ];
+
+// Add file transports only in development (Vercel doesn't support file writes)
+if (process.env.NODE_ENV === 'development') {
+  transports.push(
+    // Error log file
+    new winston.transports.File({
+      filename: path.join(__dirname, '../../logs/error.log'),
+      level: 'error',
+      format: fileFormat,
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    }),
+    
+    // Combined log file
+    new winston.transports.File({
+      filename: path.join(__dirname, '../../logs/combined.log'),
+      format: fileFormat,
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    }),
+  );
+}
 
 // Create the logger
 const logger = winston.createLogger({
