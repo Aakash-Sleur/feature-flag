@@ -28,10 +28,11 @@ import { Toaster } from "./components/ui/sonner"
 
 const App = () => {
   return (
-    <Routes>
+    <>
       <Toaster />
-      {/* PUBLIC ROUTES */}
-      <Route path="/login" element={<LoginPage />} />
+      <Routes>
+        {/* PUBLIC ROUTES */}
+        <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/invite/:token" element={<InvitePage />} />
 
@@ -87,6 +88,7 @@ const App = () => {
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </>
   )
 }
 
