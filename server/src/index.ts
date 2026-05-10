@@ -44,6 +44,22 @@ app.use(express.static(path.join(__dirname, "public")));
 // API routes
 app.use("/api", routes);
 
+// Root route
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Feature Flag Server API",
+    version: "1.0.0",
+    endpoints: {
+      health: "/api/health",
+      auth: "/api/auth",
+      organizations: "/api/organizations",
+      features: "/api/features",
+      invites: "/api/invites",
+    },
+  });
+});
+
 // Error logging middleware (should be after routes)
 app.use(errorLogger);
 
