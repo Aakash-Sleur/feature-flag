@@ -31,7 +31,7 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
   const [name, setName] = useState("")
   const [adminEmail, setAdminEmail] = useState("")
   const [adminName, setAdminName] = useState("")
-  const [sendInvite, setSendInvite] = useState(true)
+  // const [sendInvite, setSendInvite] = useState(true)
   const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -42,7 +42,7 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
       return
     }
 
-    if (sendInvite && !adminEmail.trim()) {
+    if (!adminEmail.trim()) {
       setError("Admin email is required when sending invite")
       return
     }
@@ -51,7 +51,7 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
     setError("")
 
     try {
-      if (sendInvite) {
+      // if (sendInvite) {
         // Create organization with invite - call the invite API
         const response = await apiClient.post("/invites/organization", {
           organization: name.trim(),
@@ -71,19 +71,19 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
             email: adminEmail,
             role: "ORG_ADMIN",
           },
-          is_accepted: false,
+          status: "INVITED",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }
         
         onSuccess?.(placeholderOrg)
-      } else {
-        // Direct creation - requires admin_id which we don't have in this flow
-        // This would require selecting an existing user
-        setError("Direct organization creation requires selecting an existing user. Please use invite flow.")
-        setLoading(false)
-        return
-      }
+      // } else {
+      //   // Direct creation - requires admin_id which we don't have in this flow
+      //   // This would require selecting an existing user
+      //   setError("Direct organization creation requires selecting an existing user. Please use invite flow.")
+      //   setLoading(false)
+      //   return
+      // }
       
       setName("")
       setAdminEmail("")
@@ -148,8 +148,8 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
             />
           </div>
 
-          <div className="space-y-4 border-t pt-4">
-            <div className="flex items-center space-x-2">
+          <div className="space-y-4">
+            {/* <div className="flex items-center space-x-2">
               <Switch
                 id="sendInvite"
                 checked={sendInvite}
@@ -159,10 +159,10 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
               <Label htmlFor="sendInvite" className="text-sm font-normal">
                 Send invite to organization admin
               </Label>
-            </div>
+            </div> */}
 
-            {sendInvite && (
-              <div className="space-y-4 pl-6 border-l-2 border-muted">
+            {/* {sendInvite && ( */}
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="adminName">
                     Admin Name
@@ -195,7 +195,7 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
                   />
                 </div>
               </div>
-            )}
+            {/* )} */}
           </div>
 
           {error && (
@@ -218,7 +218,7 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
               className="rounded-2xl"
               disabled={loading}
             >
-              {loading ? "Creating..." : sendInvite ? "Send Invite" : "Create Organization"}
+              {loading ? "Creating..." : "Send Invite"}
             </Button>
           </DialogFooter>
         </form>

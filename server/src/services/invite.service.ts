@@ -63,7 +63,7 @@ const getExpirationText = (expirationDate: Date): string => {
   const now = new Date();
   const diffMs = expirationDate.getTime() - now.getTime();
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  
+
   if (diffDays <= 0) {
     return 'expired';
   } else if (diffDays === 1) {
@@ -84,8 +84,8 @@ export const getInviteByToken = async (token: string): Promise<InviteDetails> =>
     throw new Error("Invite token is required");
   }
 
-  const invite = await Invite.findOne({ 
-    token, 
+  const invite = await Invite.findOne({
+    token,
     is_available: true,
     expired_at: { $gt: new Date() }
   }).populate('organization_id', 'name');
@@ -139,7 +139,7 @@ export const createOrganizationInvite = async (data: CreateOrganizationInviteDat
   }
 
   const token = crypto.randomUUID();
-  
+
   // Set default expiration to 7 days if not provided
   const expirationDate = expired_at ? new Date(expired_at) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -228,7 +228,7 @@ export const createUserInvite = async (data: CreateUserInviteData, adminUserId: 
   }
 
   const token = crypto.randomUUID();
-  
+
   // Set default expiration to 7 days if not provided
   const expirationDate = expired_at ? new Date(expired_at) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -314,7 +314,15 @@ export const consumeInvite = async (data: ConsumeInviteData): Promise<ConsumeInv
   let isNewOrganization = false;
 
   // Check if this is an organization creation invite (admin_id equals organization_id means temp org)
-  const organization = await Organization.findById(invite.organization_id);
+  const organization = await Organization.findByIdAndUpdate(
+    invite.organization_id,
+    {
+      status: "ACTIVE"
+    },
+    {
+      new: true
+    }
+  );
   if (organization && organization.admin_id.toString() === organization._id.toString()) {
     // This is a temporary organization, we need to create the real one
     isNewOrganization = true;

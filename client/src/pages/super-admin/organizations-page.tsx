@@ -5,12 +5,11 @@ import { Link } from "react-router-dom"
 import {
   Building2,
   ChevronRight,
-  Search,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 
 import {
   Table,
@@ -26,7 +25,6 @@ import { organizationAPI, type Organization } from "@/services/organization.serv
 export function OrganizationsPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     async function fetchOrganizations() {
@@ -42,9 +40,6 @@ export function OrganizationsPage() {
     fetchOrganizations()
   }, [])
 
-  const filteredOrganizations = organizations.filter(org =>
-    org.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
 
   const handleOrganizationCreated = (newOrg: Organization) => {
     setOrganizations(prev => [newOrg, ...prev])
@@ -72,17 +67,6 @@ export function OrganizationsPage() {
           <CreateOrganizationModal onSuccess={handleOrganizationCreated} />
         </div>
 
-        {/* SEARCH */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-          <Input
-            placeholder="Search organizations..."
-            className="h-11 rounded-2xl pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
 
         {/* TABLE */}
         <Card className="rounded-4xl">
@@ -96,6 +80,7 @@ export function OrganizationsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Organization</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Admins</TableHead>
                     <TableHead>Users</TableHead>
                     <TableHead>Created</TableHead>
@@ -106,14 +91,14 @@ export function OrganizationsPage() {
                 </TableHeader>
 
                 <TableBody>
-                  {filteredOrganizations.length === 0 ? (
+                  {organizations.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        {searchQuery ? "No organizations found" : "No organizations yet"}
+                        No organizations yet
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredOrganizations.map((organization) => (
+                    organizations.map((organization) => (
                       <TableRow key={organization._id}>
                         <TableCell>
                           <div className="flex items-center gap-4">
@@ -131,6 +116,13 @@ export function OrganizationsPage() {
                               </p>
                             </div>
                           </div>
+                        </TableCell>
+
+
+                        <TableCell>
+                          <Badge variant={organization.status === "ACTIVE" ? "default" : "secondary"} className="rounded-xl">
+                            {organization.status}
+                          </Badge>
                         </TableCell>
 
                         <TableCell>

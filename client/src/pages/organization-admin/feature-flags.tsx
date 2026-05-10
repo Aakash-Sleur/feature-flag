@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 
 import {
   Flag,
-  Search,
   Trash2,
   Pencil,
   Loader2,
@@ -14,8 +13,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-
 import {
   Table,
   TableBody,
@@ -45,7 +42,6 @@ export function FeatureFlagsPage() {
   const [flags, setFlags] = useState<FeatureFlagData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const [editingFlag, setEditingFlag] = useState<FeatureFlagData | undefined>(undefined)
   const [createModalOpen, setCreateModalOpen] = useState(false)
@@ -99,11 +95,6 @@ export function FeatureFlagsPage() {
     }
   }
 
-  const filteredFlags = flags.filter(
-    (flag) =>
-      flag.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      flag.feature_key.toLowerCase().includes(searchQuery.toLowerCase())
-  )
 
   const formatDate = (date?: string) => {
     if (!date) return "N/A"
@@ -160,18 +151,6 @@ export function FeatureFlagsPage() {
           </div> 
         </div>
 
-        {/* SEARCH */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-          <Input
-            placeholder="Search feature flags..."
-            className="h-11 rounded-2xl pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
         {/* ERROR */}
         {error && (
           <div className="rounded-xl bg-red-50 p-4 text-sm text-red-600">
@@ -186,11 +165,10 @@ export function FeatureFlagsPage() {
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : filteredFlags.length === 0 ? (
+            ) : flags.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
-                {searchQuery
-                  ? "No feature flags match your search"
-                  : "No feature flags yet. Create one to get started."}
+                
+                  No feature flags yet. Create one to get started.
               </div>
             ) : (
               <Table>
@@ -209,7 +187,7 @@ export function FeatureFlagsPage() {
                 </TableHeader>
 
                 <TableBody>
-                  {filteredFlags.map((flag) => (
+                  {flags.map((flag) => (
                     <TableRow key={flag._id}>
                       <TableCell>
                         <div className="flex items-center gap-4">

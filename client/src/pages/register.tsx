@@ -13,6 +13,7 @@ import {
 import { IconUser, IconMail, IconLock, IconBuildingCommunity, IconAlertCircle } from "@tabler/icons-react"
 import apiClient from "@/lib/api-client"
 import { useUser } from "@/context/user-context"
+import { getRedirectUrl } from "@/lib/constants"
 
 interface InviteData {
   email: string
@@ -104,8 +105,10 @@ export const RegisterPage = () => {
         setOrganization(data.data.organization)
       }
 
+      const url = getRedirectUrl(data.data.user.role)
+
       // Redirect to dashboard
-      navigate("/dashboard")
+      navigate(url)
     } catch (err: any) {
       const message = err.response?.data?.message || "An error occurred during registration"
       setError(message)

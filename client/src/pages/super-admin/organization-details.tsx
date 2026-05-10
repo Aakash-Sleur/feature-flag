@@ -1,5 +1,6 @@
 // src/pages/super-admin/organization-details.tsx
 
+import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 
 import {
@@ -13,40 +14,76 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { superAdminAPI } from "@/services/super-admin.service"
 
-const organization = {
-  id: "1",
-  name: "Acme Inc",
-  slug: "acme-inc",
-  description:
-    "Feature flag infrastructure for internal platform rollout and experimentation.",
-  admins: 3,
-  users: 128,
-  featureFlags: 12,
-  createdAt: "May 08, 2026",
-  status: "Active",
+interface FeatureFlag {
+  _id: string
+  title: string
+  feature_key: string
+  description?: string
+  enabled: boolean
+  created_by?: string
+  createdAt?: string
+  updatedAt?: string
 }
-
-const featureFlags = [
-  {
-    id: "1",
-    key: "new_dashboard",
-    enabled: true,
-  },
-  {
-    id: "2",
-    key: "beta_checkout",
-    enabled: false,
-  },
-  {
-    id: "3",
-    key: "experimental_search",
-    enabled: true,
-  },
-]
 
 export function OrganizationDetailsPage() {
   const { id } = useParams()
+  const [organization, setOrganization] = useState<any | null>(null)
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchData() {
+      if (!id) {
+        setError("Organization ID is missing")
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Fetch organization details using super admin API
+        const data = await superAdminAPI.getOrganizationDetails(id)
+        setOrganization(data.organization)
+        setFeatureFlags(data.featureFlags)
+      } catch (err) {
+        console.error("Failed to fetch organization details:", err)
+        setError("Failed to load organization details. Please try again.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [id])
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-background">
+        <section className="mx-auto max-w-7xl space-y-8 px-6 py-10">
+          <div className="flex items-center justify-center py-20">
+            <p className="text-muted-foreground">Loading organization details...</p>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
+  if (error || !organization) {
+    return (
+      <main className="min-h-screen bg-background">
+        <section className="mx-auto max-w-7xl space-y-8 px-6 py-10">
+          <div className="flex items-center justify-center py-20">
+            <p className="text-red-500">{error || "Organization not found"}</p>
+          </div>
+        </section>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -68,28 +105,32 @@ export function OrganizationDetailsPage() {
                   variant="secondary"
                   className="rounded-xl"
                 >
-                  {organization.status}
+                  Active
                 </Badge>
               </div>
 
               <p className="text-muted-foreground">
-                {organization.description}
+                {organization.admin_id?.name || "Organization"} - {organization.admin_id?.email}
               </p>
 
               <div className="flex flex-wrap items-center gap-5 pt-1 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4" />
-                  {organization.slug}
-                </div>
+                  {organization.slug || "N/A"}
+                </div> */}
 
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4" />
-                  {organization.createdAt}
+                  {new Date(organization.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
                 </div>
-
+{/* 
                 <div className="text-xs text-muted-foreground">
-                  ID: {id}
-                </div>
+                  ID: {organization._id}
+                </div> */}
               </div>
             </div>
           </div>
@@ -109,7 +150,7 @@ export function OrganizationDetailsPage() {
                 </p>
 
                 <h2 className="text-3xl font-bold">
-                  {organization.users}
+                  {organization.stats?.userCount || 0}
                 </h2>
               </div>
             </CardContent>
@@ -127,7 +168,7 @@ export function OrganizationDetailsPage() {
                 </p>
 
                 <h2 className="text-3xl font-bold">
-                  {organization.admins}
+                  {organization.stats?.adminCount || 0}
                 </h2>
               </div>
             </CardContent>
@@ -145,7 +186,7 @@ export function OrganizationDetailsPage() {
                 </p>
 
                 <h2 className="text-3xl font-bold">
-                  {organization.featureFlags}
+                  {organization.stats?.featureFlagCount || 0}
                 </h2>
               </div>
             </CardContent>
@@ -161,42 +202,50 @@ export function OrganizationDetailsPage() {
               </h2>
 
               <p className="text-sm text-muted-foreground">
-                Flags configured for this organization.
+                {featureFlags.length === 0
+                  ? "No feature flags configured for this organization."
+                  : `${featureFlags.length} flag${featureFlags.length !== 1 ? "s" : ""} configured for this organization.`}
               </p>
             </div>
 
             <Separator />
 
             <div className="space-y-4">
-              {featureFlags.map((flag) => (
-                <div
-                  key={flag.id}
-                  className="flex items-center justify-between rounded-2xl border border-border p-4"
-                >
-                  <div className="space-y-1">
-                    <p className="font-medium">
-                      {flag.key}
-                    </p>
-
-                    <p className="text-sm text-muted-foreground">
-                      Feature toggle configuration
-                    </p>
-                  </div>
-
-                  <Badge
-                    variant={
-                      flag.enabled
-                        ? "default"
-                        : "secondary"
-                    }
-                    className="rounded-xl"
+              {featureFlags.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">
+                  No feature flags to display
+                </p>
+              ) : (
+                featureFlags.map((flag) => (
+                  <div
+                    key={flag._id}
+                    className="flex items-center justify-between rounded-2xl border border-border p-4"
                   >
-                    {flag.enabled
-                      ? "Enabled"
-                      : "Disabled"}
-                  </Badge>
-                </div>
-              ))}
+                    <div className="space-y-1">
+                      <p className="font-medium">
+                        {flag.title || flag.feature_key}
+                      </p>
+
+                      <p className="text-sm text-muted-foreground">
+                        {flag.description || flag.feature_key}
+                      </p>
+                    </div>
+
+                    <Badge
+                      variant={
+                        flag.enabled
+                          ? "default"
+                          : "secondary"
+                      }
+                      className="rounded-xl"
+                    >
+                      {flag.enabled
+                        ? "Enabled"
+                        : "Disabled"}
+                    </Badge>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

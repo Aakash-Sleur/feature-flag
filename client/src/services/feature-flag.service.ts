@@ -41,7 +41,7 @@ export const featureFlagAPI = {
 
   async getById(id: string): Promise<FeatureFlag> {
     const response = await apiClient.get<FeatureFlagResponse>(
-      `/feature/${id}`
+      `/features/${id}`
     )
     return response.data.data as FeatureFlag
   },
@@ -68,7 +68,7 @@ export const featureFlagAPI = {
 
   async toggle(id: string, enabled: boolean): Promise<FeatureFlag> {
     const response = await apiClient.put<FeatureFlagResponse>(
-      `/feature/${id}`,
+      `/features/${id}`,
       { enabled }
     )
     return response.data.data as FeatureFlag

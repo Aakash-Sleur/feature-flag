@@ -13,31 +13,7 @@ import {
 import { IconMail, IconLock, IconAlertCircle } from "@tabler/icons-react"
 import { authAPI } from "@/services/auth.service"
 import { useUser } from "@/context/user-context"
-
-// User role constants
-export const UserRole = {
-  SUPER_ADMIN: "SUPER_ADMIN",
-  ORG_ADMIN: "ORG_ADMIN",
-  END_USER: "END_USER",
-} as const
-
-export type UserRoleType = (typeof UserRole)[keyof typeof UserRole]
-
-// Role to URL mapping
-const roleToUrl: Record<UserRoleType, string> = {
-  [UserRole.SUPER_ADMIN]: "/super-admin/organizations",
-  [UserRole.ORG_ADMIN]: "/org/feature-flags",
-  [UserRole.END_USER]: "/user/features",
-}
-
-/**
- * Get the redirect URL based on user role
- * @param role - The user's role
- * @returns The appropriate redirect URL
- */
-export const getRedirectUrl = (role: string): string => {
-  return roleToUrl[role as UserRoleType] ?? "/unauthorized"
-}
+import { getRedirectUrl } from "@/lib/constants"
 
 export const LoginPage = () => {
   const navigate = useNavigate()

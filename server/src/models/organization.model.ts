@@ -19,7 +19,12 @@ const organizationSchema = new mongoose.Schema(
             type: Boolean,
             required: true,
             default: false
-        }
+        },
+        status: {
+            type: String,
+            enum: ["INVITED", "ACTIVE"],
+            default: "INVITED"
+        },
     },
     {
         timestamps: true,

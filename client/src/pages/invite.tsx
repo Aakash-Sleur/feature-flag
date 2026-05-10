@@ -13,6 +13,7 @@ import {
 import { IconLock, IconUser, IconBuildingCommunity, IconAlertCircle, IconCheck } from "@tabler/icons-react"
 import { inviteAPI } from "@/services/invite.service"
 import { useUser } from "@/context/user-context"
+import { getRedirectUrl } from "@/lib/constants"
 
 interface InviteDetails {
   email: string
@@ -106,8 +107,8 @@ export const InvitePage = () => {
       setUser(result.user)
       setAccessToken(result.accessToken)
 
-      // Redirect to end user dashboard
-      navigate("/user/features")
+      const url = getRedirectUrl(result.user.role)
+      navigate(url)
     } catch (err: any) {
       const message = err.response?.data?.message || "Failed to complete registration"
       setError(message)

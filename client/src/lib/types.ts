@@ -4,5 +4,5 @@ export const UserRole = {
   END_USER: "END_USER",
 } as const
 
-export type UserRole =
+export type UserRoleType =
   (typeof UserRole)[keyof typeof UserRole]

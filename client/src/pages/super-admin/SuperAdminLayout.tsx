@@ -1,32 +1,18 @@
 import { useUser } from "@/context/user-context"
 
 import {
-  Building2,
-  LayoutDashboard,
+  Flag,
   LogOut,
 } from "lucide-react"
 
 import {
   Link,
   Navigate,
-  NavLink,
   Outlet,
 } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 
-const navigation = [
-  {
-    label: "Dashboard",
-    href: "/super-admin/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Organizations",
-    href: "/super-admin/organizations",
-    icon: Building2,
-  },
-]
 
 const SuperAdminLayout = () => {
   const {
@@ -69,36 +55,12 @@ const SuperAdminLayout = () => {
           {/* LEFT */}
           <div className="flex items-center gap-10">
             <Link
-              to="/super-admin/dashboard"
-              className="font-heading text-xl font-bold tracking-tight"
+              to="/super-admin/organizations"
+              className="font-heading flex items-center text-xl font-bold tracking-tight"
             >
+              <Flag className="text-sm mr-2" fill="black" />
               Feature Flags
             </Link>
-
-            {/* NAVIGATION */}
-            <nav className="hidden items-center gap-2 md:flex">
-              {navigation.map((item) => {
-                const Icon = item.icon
-
-                return (
-                  <NavLink
-                    key={item.href}
-                    to={item.href}
-                    className={({ isActive }) =>
-                      [
-                        "inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      ].join(" ")
-                    }
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </NavLink>
-                )
-              })}
-            </nav>
           </div>
 
           {/* RIGHT */}

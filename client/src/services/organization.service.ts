@@ -3,14 +3,13 @@ import apiClient from "@/lib/api-client"
 export interface Organization {
   _id: string
   name: string
-  slug?: string
   admin_id: {
     _id: string
     name: string
     email: string
     role: string
   }
-  is_accepted: boolean
+  status: string
   createdAt: string
   updatedAt: string
   userCount?: number
