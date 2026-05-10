@@ -110,7 +110,7 @@ process.on('uncaughtException', (error: Error) => {
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Unhandled Rejection at:', promise + 'reason:' +  reason);
   process.exit(1);
 });
 
