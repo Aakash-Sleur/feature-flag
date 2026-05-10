@@ -1,11 +1,11 @@
 import { Navigate } from "react-router-dom"
 import { useUser } from "@/context/user-context"
-import { UserRole } from "@/lib/types"
+import { type UserRoleType } from "@/lib/types"
 
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  allowedRoles?: UserRole
+  allowedRoles?: UserRoleType
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
@@ -32,7 +32,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     allowedRoles &&
     user &&
     user?.role &&
-    !allowedRoles.includes(user.role as UserRole)
+    !allowedRoles.includes(user.role as UserRoleType)
   ) {
     return <Navigate to="/unauthorized" replace />
   }
