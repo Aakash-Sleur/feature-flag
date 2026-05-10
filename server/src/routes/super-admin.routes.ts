@@ -1,5 +1,3 @@
-// src/routes/super-admin.routes.ts
-
 import express, { Router } from "express";
 import { authenticateToken } from "../middleware/jwt.js";
 import { requireSuperAdmin } from "../middleware/role-check.js";

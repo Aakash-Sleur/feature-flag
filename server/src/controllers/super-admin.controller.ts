@@ -1,5 +1,3 @@
-// src/controllers/super-admin.controller.ts
-
 import type { Request, Response } from "express";
 import { Organization } from "../models/organization.model.js";
 import { User, UserRole } from "../models/user.model.js";

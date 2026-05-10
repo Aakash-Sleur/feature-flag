@@ -1,5 +1,3 @@
-// src/models/user.model.ts
-
 import mongoose, { type InferSchemaType } from "mongoose";
 
 export enum UserRole {

@@ -1,5 +1,3 @@
-// src/routes/auth.routes.ts
-
 import { Router } from "express";
 import { register, login, getProfile, refreshToken, logout, registerWithInvite } from "../controllers/auth.controller.js";
 import { authenticateToken } from "../middleware/jwt.js";

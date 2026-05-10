@@ -1,5 +1,3 @@
-// src/models/refresh-token.model.ts
-
 import mongoose from "mongoose";
 
 const refreshTokenSchema = new mongoose.Schema(

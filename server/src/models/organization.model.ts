@@ -1,5 +1,3 @@
-// src/models/organization.model.ts
-
 import mongoose from "mongoose";
 
 const organizationSchema = new mongoose.Schema(

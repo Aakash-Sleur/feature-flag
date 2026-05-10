@@ -1,5 +1,3 @@
-// src/models/invite.model.ts
-
 import mongoose from "mongoose";
 
 const inviteSchema = new mongoose.Schema(
