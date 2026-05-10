@@ -56,6 +56,7 @@ app.get("/", (req, res) => {
       organizations: "/api/organizations",
       features: "/api/features",
       invites: "/api/invites",
+      client: corsOptions
     },
   });
 });
