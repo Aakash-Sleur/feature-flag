@@ -1,19 +1,17 @@
 import express, { type Express } from "express";
 import cookieParser from "cookie-parser";
 import compression from "compression";
-import cors from "cors"
-import * as http from "http"
+import cors from "cors";
 import mongoose from "mongoose";
-import "dotenv/config"
+import "dotenv/config";
 import { fileURLToPath } from "url";
 import path from "path";
 
 // Import logging utilities
 import logger from "./utils/logger.js";
-import morganMiddleware from "./middleware/morgan.js";
 import { requestLogger, errorLogger } from "./middleware/request-logger.js";
 
-// Import models to register them
+// Import models
 import "./models/user.model.js";
 import "./models/organization.model.js";
 import "./models/feature.model.js";
@@ -22,30 +20,82 @@ import "./models/refresh_token.model.js";
 
 // Import routes
 import routes from "./routes/index.js";
-import { corsOptions, MONGO_URI, mongodbOptions, PORT } from "./config/config.js";
+
+import {
+  corsOptions,
+  MONGO_URI,
+  mongodbOptions,
+} from "./config/config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app: Express = express()
+const app: Express = express();
 
-// Logging middleware (should be first)
-// app.use(morganMiddleware);
+/**
+ * MongoDB Connection Cache
+ */
+let isConnected = false;
+
+const connectToMongoDB = async () => {
+  try {
+    if (isConnected) {
+      return;
+    }
+
+    await mongoose.connect(MONGO_URI!, mongodbOptions);
+
+    isConnected = true;
+
+    logger.info("Connected to MongoDB successfully 🤝");
+  } catch (err) {
+    logger.error("MongoDB connection error:", err);
+
+    throw err;
+  }
+};
+
+/**
+ * Middleware
+ */
+
+// Request logging
 app.use(requestLogger);
 
-// Apply CORS middleware
+// CORS
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
+// Parsers
 app.use(compression());
 app.use(cookieParser());
 app.use(express.json());
+
+// Static files
 app.use(express.static(path.join(__dirname, "public")));
 
-// API routes
+/**
+ * Ensure DB connection before routes
+ */
+app.use(async (_, __, next) => {
+  try {
+    await connectToMongoDB();
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * API Routes
+ */
 app.use("/api", routes);
 
-// Root route
-app.get("/", (req, res) => {
+/**
+ * Root Route
+ */
+app.get("/", (_, res) => {
   res.json({
     success: true,
     message: "Feature Flag Server API",
@@ -56,88 +106,45 @@ app.get("/", (req, res) => {
       organizations: "/api/organizations",
       features: "/api/features",
       invites: "/api/invites",
-      client: corsOptions
+      client: corsOptions,
     },
   });
 });
 
-// Error logging middleware (should be after routes)
+/**
+ * Error Logging Middleware
+ */
 app.use(errorLogger);
 
-// Global error handler
-app.use((error: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('Global error handler:', {
-    error: {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    },
-    url: req.url,
-    method: req.method,
-  });
-  
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
-  });
-});
+/**
+ * Global Error Handler
+ */
+app.use(
+  (
+    error: Error,
+    req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction
+  ) => {
+    logger.error("Global error handler:", {
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      },
+      url: req.url,
+      method: req.method,
+    });
 
-const server = http.createServer(app);
-
-// MongoDB connection with retry logic
-const connectToMongoDB = async (retries = 5) => {
-  try {
-    await mongoose.connect(MONGO_URI!, mongodbOptions);
-    logger.info("Connected to MongoDB successfully 🤝");
-  } catch (err) {
-    logger.error("Error while connecting to MongoDB:", err);
-    
-    if (retries > 0) {
-      logger.warn(`Retrying MongoDB connection... (${retries} attempts left)`);
-      setTimeout(() => connectToMongoDB(retries - 1), 5000);
-    } else {
-      logger.error("Failed to connect to MongoDB after multiple attempts");
-      logger.warn("Starting server without database connection...");
-    }
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Something went wrong",
+    });
   }
-};
+);
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (error: Error) => {
-  logger.error('Uncaught Exception:', error);
-  process.exit(1);
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-  logger.error('Unhandled Rejection at:', promise + 'reason:' +  reason);
-  process.exit(1);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    logger.info('Process terminated');
-    mongoose.connection.close();
-  });
-});
-
-process.on('SIGINT', () => {
-  logger.info('SIGINT received. Shutting down gracefully...');
-  server.close(() => {
-    logger.info('Process terminated');
-    mongoose.connection.close();
-  });
-});
-
-// Start MongoDB connection
-connectToMongoDB();
-
-// Start server
-server.listen(PORT, () => {
-    logger.info(`🚀 Server is running at http://localhost:${PORT}`);
-    logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger.info(`📊 Log level: ${process.env.NODE_ENV === 'production' ? 'warn' : 'debug'}`);
-});
+export default app;
