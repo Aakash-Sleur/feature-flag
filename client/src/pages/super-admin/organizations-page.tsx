@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import {
-  Building2,
-  ChevronRight,
-} from "lucide-react"
+import { Building2, ChevronRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -20,7 +17,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { CreateOrganizationModal } from "@/components/modals/create-organizations-modal"
-import { organizationAPI, type Organization } from "@/services/organization.service"
+import {
+  organizationAPI,
+  type Organization,
+} from "@/services/organization.service"
+import { toaster } from "@/lib/toast"
 
 export function OrganizationsPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
@@ -40,9 +41,9 @@ export function OrganizationsPage() {
     fetchOrganizations()
   }, [])
 
-
   const handleOrganizationCreated = (newOrg: Organization) => {
-    setOrganizations(prev => [newOrg, ...prev])
+    setOrganizations((prev) => [newOrg, ...prev])
+    toaster.success("Invitation sent to the specified email")
   }
 
   return (
@@ -51,7 +52,7 @@ export function OrganizationsPage() {
         {/* HEADER */}
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="space-y-1">
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-sm font-medium tracking-[0.2em] text-muted-foreground uppercase">
               Super Admin
             </p>
 
@@ -67,13 +68,14 @@ export function OrganizationsPage() {
           <CreateOrganizationModal onSuccess={handleOrganizationCreated} />
         </div>
 
-
         {/* TABLE */}
         <Card className="rounded-4xl">
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center p-8">
-                <p className="text-muted-foreground">Loading organizations...</p>
+                <p className="text-muted-foreground">
+                  Loading organizations...
+                </p>
               </div>
             ) : (
               <Table>
@@ -84,16 +86,17 @@ export function OrganizationsPage() {
                     <TableHead>Admins</TableHead>
                     <TableHead>Users</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead className="text-right">
-                      Action
-                    </TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
 
                 <TableBody>
                   {organizations.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell
+                        colSpan={5}
+                        className="py-8 text-center text-muted-foreground"
+                      >
                         No organizations yet
                       </TableCell>
                     </TableRow>
@@ -107,9 +110,7 @@ export function OrganizationsPage() {
                             </div>
 
                             <div>
-                              <p className="font-medium">
-                                {organization.name}
-                              </p>
+                              <p className="font-medium">{organization.name}</p>
 
                               <p className="text-sm text-muted-foreground">
                                 {organization._id}
@@ -118,23 +119,33 @@ export function OrganizationsPage() {
                           </div>
                         </TableCell>
 
-
                         <TableCell>
-                          <Badge variant={organization.status === "ACTIVE" ? "default" : "secondary"} className="rounded-xl">
+                          <Badge
+                            variant={
+                              organization.status === "ACTIVE"
+                                ? "default"
+                                : "secondary"
+                            }
+                            className="rounded-xl"
+                          >
                             {organization.status}
                           </Badge>
                         </TableCell>
 
-                        <TableCell>
-                          1
-                        </TableCell>
+                        <TableCell>1</TableCell>
+
+                        <TableCell>{organization.userCount ?? 0}</TableCell>
 
                         <TableCell>
-                          {organization.userCount ?? 0}
-                        </TableCell>
-
-                        <TableCell>
-                          {organization.createdAt ? new Date(organization.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
+                          {organization.createdAt
+                            ? new Date(
+                                organization.createdAt
+                              ).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                            : "-"}
                         </TableCell>
 
                         <TableCell className="text-right">

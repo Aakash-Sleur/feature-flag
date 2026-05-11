@@ -46,6 +46,7 @@ const featureFlagSchema = new mongoose.Schema(
 featureFlagSchema.index(
     {
         organization_id: 1,
+        feature_key: 1,
     },
     {
         unique: true,
