@@ -18,44 +18,15 @@ export const mongodbOptions = {
   bufferCommands: false,
 };
 
-// Allow multiple origins for CORS (development and production)
-const allowedOrigins = [
-  "https://feature-flag-olrs.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:3000",
-  CLIENT_URL,
-].filter((origin, index, self) => origin && self.indexOf(origin) === index); // Remove duplicates and undefined
+// Allow all origins for CORS
+console.log('🌐 CORS: Allowing ALL origins');
 
-console.log('🌐 CORS Allowed Origins:', allowedOrigins);
-
-// Simplified CORS for Vercel - headers are set in vercel.json
 export const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    // In production (Vercel), allow all since headers are set in vercel.json
-    if (process.env.VERCEL === '1') {
-      console.log(`✅ CORS (Vercel): Allowing origin: ${origin || 'no-origin'}`);
-      return callback(null, true);
-    }
-    
-    // In development, check against allowed origins
-    if (!origin) {
-      console.log('✅ CORS: Allowing request with no origin header');
-      return callback(null, true);
-    }
-    
-    if (allowedOrigins.includes(origin)) {
-      console.log(`✅ CORS: Allowing origin: ${origin}`);
-      callback(null, true);
-    } else {
-      console.warn(`❌ CORS: Blocking origin: ${origin}`);
-      console.warn(`   Allowed origins:`, allowedOrigins);
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
-    }
-  },
+  origin: true, // Allow all origins
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   exposedHeaders: ["Set-Cookie"],
-  credentials: true,
+  credentials: true, // Allow credentials
   optionsSuccessStatus: 200,
   preflightContinue: false,
 };
