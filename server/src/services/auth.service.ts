@@ -246,10 +246,30 @@ export const refreshToken = async (refreshToken: string): Promise<{ accessToken:
 };
 
 /**
- * Logout user (revoke refresh token)
+ * Logout user (revoke refresh token and clear access token)
  */
-export const logout = async (refreshToken?: string): Promise<void> => {
-  if (refreshToken) {
-    await revokeRefreshTokenUtil(refreshToken);
+export const logout = async (refreshToken?: string, userId?: string): Promise<void> => {
+  try {
+    // Revoke refresh token if provided
+    if (refreshToken) {
+      await revokeRefreshTokenUtil(refreshToken);
+      logger.debug('Refresh token revoked', { hasToken: !!refreshToken });
+    }
+
+    // Clear access token from user document if userId provided
+    if (userId) {
+      await User.findByIdAndUpdate(userId, { 
+        access_token: null 
+      });
+      logger.debug('Access token cleared from user document', { userId });
+    }
+
+    logger.info('Logout completed', { 
+      revokedRefreshToken: !!refreshToken,
+      clearedAccessToken: !!userId 
+    });
+  } catch (error) {
+    logger.error('Logout error:', error);
+    throw error;
   }
 };

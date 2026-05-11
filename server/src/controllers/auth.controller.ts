@@ -266,16 +266,27 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
 };
 
 /**
- * Logout user (revoke refresh token)
+ * Logout user (revoke refresh token and clear access token)
  */
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
     const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+    const userId = req.user?._id; // Get user ID from authenticated request
 
-    await logoutUser(refreshToken);
+    // Revoke refresh token from database
+    await logoutUser(refreshToken, userId);
 
     // Clear refresh token cookie
-    res.clearCookie("refreshToken");
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    logger.info('User logged out successfully', { 
+      userId: userId || 'unknown',
+      hadRefreshToken: !!refreshToken 
+    });
 
     res.json({
       success: true,
