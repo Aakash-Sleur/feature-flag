@@ -150,17 +150,42 @@ export const login = async (data: LoginData): Promise<AuthResult> => {
     throw new Error("Email and password are required");
   }
 
+  logger.debug('Login attempt', { email: email.toLowerCase() });
+
   const user = await User.findOne({ email: email.toLowerCase() });
   if (!user) {
+    logger.warn('Login failed: User not found', { email: email.toLowerCase() });
     throw new Error("Invalid email or password");
   }
 
+  logger.debug('User found, comparing password', { 
+    userId: user._id,
+    hasPasswordHash: !!user.password_hash,
+    passwordHashLength: user.password_hash?.length 
+  });
+
   const isValidPassword = await bcrypt.compare(password, user.password_hash);
+  
+  logger.debug('Password comparison result', { 
+    userId: user._id,
+    isValid: isValidPassword 
+  });
+
   if (!isValidPassword) {
+    logger.warn('Login failed: Invalid password', { 
+      userId: user._id,
+      email: email.toLowerCase() 
+    });
     throw new Error("Invalid email or password");
   }
 
   const { accessToken, refreshToken } = await generateTokenPair(user);
+  
+  logger.info('Login successful', { 
+    userId: user._id,
+    email: user.email,
+    role: user.role 
+  });
 
   return {
     user: {

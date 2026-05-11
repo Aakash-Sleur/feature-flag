@@ -14,9 +14,15 @@ export const apiClient: AxiosInstance = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken")
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    // Don't add Authorization header for login/register/public endpoints
+    const publicEndpoints = ['/auth/login', '/auth/register', '/auth/register/invite', '/invites/consume']
+    const isPublicEndpoint = publicEndpoints.some(endpoint => config.url?.includes(endpoint))
+    
+    if (!isPublicEndpoint) {
+      const token = localStorage.getItem("accessToken")
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
     return config
   },

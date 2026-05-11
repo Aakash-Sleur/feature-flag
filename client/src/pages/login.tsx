@@ -39,8 +39,21 @@ export const LoginPage = () => {
     setLoading(true)
     setError(null)
 
+    // Clear any stale tokens from previous sessions before login
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("user")
+    localStorage.removeItem("organization")
+
+    console.log('🔐 Login attempt:', { email: formData.email })
+
     try {
       const data = await authAPI.login(formData)
+      
+      console.log('✅ Login successful:', { 
+        user: data.data.user.email, 
+        role: data.data.user.role,
+        hasToken: !!data.data.accessToken 
+      })
 
       // Update context with user and token
       setUser(data.data.user)
@@ -48,11 +61,19 @@ export const LoginPage = () => {
 
       // Redirect based on user role
       const redirectUrl = getRedirectUrl(data.data.user.role)
+      console.log('🔀 Redirecting to:', redirectUrl)
       navigate(redirectUrl)
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "An error occurred during login"
-      )
+    } catch (err: any) {
+      console.error('❌ Login failed:', {
+        status: err.response?.status,
+        message: err.response?.data?.message,
+        error: err.response?.data?.error,
+        fullError: err
+      })
+      
+      // Handle axios errors with proper response data
+      const message = err.response?.data?.message || err.message || "An error occurred during login"
+      setError(message)
     } finally {
       setLoading(false)
     }
