@@ -25,6 +25,7 @@ import {
   corsOptions,
   MONGO_URI,
   mongodbOptions,
+  PORT,
 } from "./config/config.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -59,12 +60,12 @@ const connectToMongoDB = async () => {
  * Middleware
  */
 
-// Request logging
-app.use(requestLogger);
-
-// CORS
+// CORS - MUST be first to handle preflight requests
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
+
+// Request logging
+app.use(requestLogger);
 
 // Parsers
 app.use(compression());
