@@ -140,6 +140,91 @@ export const createFeatureFlag = async (req: Request, res: Response) => {
   }
 };
 
+export const checkFeatureFlag = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    const { id } = req.params;
+
+    if (!user?.organizationId) {
+      res.status(400).json({
+        success: false,
+        message: "User organization not found",
+        error: "MISSING_ORGANIZATION",
+      });
+      return;
+    }
+    
+    const featureFlag = await FeatureFlag.findOne({
+      _id: id,
+      organization_id: user.organizationId,
+    });
+
+    
+    if (!featureFlag) {
+      res.status(404).json({
+        success: false,
+        message: "Feature flag not found",
+        error: "FEATURE_FLAG_NOT_FOUND",
+      });
+      return;
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Feature flag found"
+    })
+  } catch (error) {
+     logger.error("Failed to check feature flag");
+    res.status(500).json({
+      success: false,
+      message: error,
+      error: "CHECK_FEATURE_FLAG",
+    });
+  }
+}
+
+export const checkFeatureFlagByKey = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    const { key } = req.params;
+
+    if (!user?.organizationId) {
+      res.status(400).json({
+        success: false,
+        message: "User organization not found",
+        error: "MISSING_ORGANIZATION",
+      });
+      return;
+    }
+
+    const featureFlag = await FeatureFlag.findOne({
+      feature_key: key,
+      organization_id: user.organizationId,
+    });
+
+    if (!featureFlag) {
+      return res.status(200).json({
+        success: true,
+        enabled: false,
+        message: "Feature flag not found or disabled"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      enabled: featureFlag.enabled,
+      message: featureFlag.enabled ? "Feature is enabled" : "Feature is disabled"
+    });
+  } catch (error) {
+    logger.error("Failed to check feature flag by key");
+    res.status(500).json({
+      success: false,
+      message: error,
+      error: "CHECK_FEATURE_FLAG_BY_KEY",
+    });
+  }
+}
+
 export const updateFeatureFlag = async (req: Request, res: Response) => {
   try {
     const user = req.user;

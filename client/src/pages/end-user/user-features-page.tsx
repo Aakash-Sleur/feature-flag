@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import type { FeatureFlagData } from "../organization-admin/feature-flags"
 import { featureFlagAPI } from "@/services/feature-flag.service"
 import { toast } from "sonner"
+import { FeatureDemoModal } from "@/components/modals/feature-demo-modal"
 
 export function UserFeaturesPage() {
   const [flags, setFlags] = useState<FeatureFlagData[]>([])
@@ -41,13 +42,17 @@ export function UserFeaturesPage() {
       <section className="mx-auto max-w-5xl space-y-8 px-6 py-10">
         {/* HEADER */}
         <div className="space-y-2">
-          <h1 className="font-heading text-4xl font-bold tracking-tight">
-            Feature Access
-          </h1>
-
-          <p className="text-muted-foreground">
-            Check which features are available for your organization.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-heading text-4xl font-bold tracking-tight">
+                Feature Access
+              </h1>
+              <p className="text-muted-foreground">
+                Check which features are available for your organization.
+              </p>
+            </div>
+            <FeatureDemoModal />
+          </div>
         </div>
 
         {/* FEATURES */}
