@@ -28,9 +28,16 @@ const allowedOrigins = [
 
 console.log('🌐 CORS Allowed Origins:', allowedOrigins);
 
+// Simplified CORS for Vercel - headers are set in vercel.json
 export const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    // Allow requests with no origin (like mobile apps, Postman, curl, or same-origin)
+    // In production (Vercel), allow all since headers are set in vercel.json
+    if (process.env.VERCEL === '1') {
+      console.log(`✅ CORS (Vercel): Allowing origin: ${origin || 'no-origin'}`);
+      return callback(null, true);
+    }
+    
+    // In development, check against allowed origins
     if (!origin) {
       console.log('✅ CORS: Allowing request with no origin header');
       return callback(null, true);
