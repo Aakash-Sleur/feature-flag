@@ -18,7 +18,6 @@ const featureFlagSchema = new mongoose.Schema(
 
         feature_key: {
             type: String,
-            unique: true,
             required: true,
             trim: true,
         },

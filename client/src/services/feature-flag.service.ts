@@ -73,6 +73,13 @@ export const featureFlagAPI = {
     )
     return response.data.data as FeatureFlag
   },
+
+  async checkByKey(key: string): Promise<{ enabled: boolean; message: string }> {
+    const response = await apiClient.get<{ success: boolean; enabled: boolean; message: string }>(
+      `/features/check/key/${key}`
+    )
+    return { enabled: response.data.enabled, message: response.data.message }
+  },
 }
 
 export { handleError }
