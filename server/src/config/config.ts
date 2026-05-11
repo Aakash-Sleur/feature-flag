@@ -18,9 +18,30 @@ export const mongodbOptions = {
   bufferCommands: false,
 };
 
+// Allow multiple origins for CORS (development and production)
+const allowedOrigins = [
+  CLIENT_URL,
+  "https://feature-flag-olrs.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+].filter(Boolean); // Remove any undefined values
+
 export const corsOptions = {
-  origin: CLIENT_URL,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   credentials: true,
+  optionsSuccessStatus: 200,
 };

@@ -2,6 +2,10 @@ import axios, { type AxiosInstance, AxiosError } from "axios"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api"
 
+// Log the API URL being used (helpful for debugging)
+console.log('🌐 API Base URL:', API_BASE_URL)
+console.log('🔧 Environment:', import.meta.env.MODE)
+
 // Create axios instance
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
