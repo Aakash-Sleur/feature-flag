@@ -22,7 +22,6 @@ import "./models/refresh_token.model.js";
 import routes from "./routes/index.js";
 
 import {
-  corsOptions,
   MONGO_URI,
   mongodbOptions,
   PORT,
@@ -57,41 +56,62 @@ const connectToMongoDB = async () => {
 };
 
 /**
+ * CORS Configuration
+ */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin
+    // (mobile apps, Postman, curl, server-to-server)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    logger.warn(`Blocked by CORS: ${origin}`);
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+
+  credentials: true,
+
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+  ],
+};
+
+/**
  * Middleware
  */
 
-// CORS - MUST be first to handle preflight requests
+// CORS FIRST
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-
-// Request logging
-app.use(requestLogger);
 
 // Parsers
 app.use(compression());
 app.use(cookieParser());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Request logging
+app.use(requestLogger);
 
 // Static files
 app.use(express.static(path.join(__dirname, "public")));
-
-/**
- * Ensure DB connection before routes
- */
-app.use(async (_, __, next) => {
-  try {
-    await connectToMongoDB();
-
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * API Routes
- */
-app.use("/api", routes);
 
 /**
  * Root Route
@@ -101,16 +121,13 @@ app.get("/", (_, res) => {
     success: true,
     message: "Feature Flag Server API",
     version: "1.0.0",
-    endpoints: {
-      health: "/api/health",
-      auth: "/api/auth",
-      organizations: "/api/organizations",
-      features: "/api/features",
-      invites: "/api/invites",
-      client: corsOptions,
-    },
   });
 });
+
+/**
+ * API Routes
+ */
+app.use("/api", routes);
 
 /**
  * Error Logging Middleware
@@ -137,7 +154,15 @@ app.use(
       method: req.method,
     });
 
-    res.status(500).json({
+    // Handle CORS errors specifically
+    if (error.message === "Not allowed by CORS") {
+      return res.status(403).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
       message: "Internal server error",
       error:
@@ -149,32 +174,34 @@ app.use(
 );
 
 /**
- * Start Server (only in non-Vercel environments)
+ * Start Server
  */
 const startServer = async () => {
   try {
+    // Connect ONCE during startup
     await connectToMongoDB();
-    
-    // Only start listening if not in Vercel serverless environment
-    if (process.env.VERCEL !== '1') {
+
+    // Vercel serverless should not call listen()
+    if (process.env.VERCEL !== "1") {
       app.listen(PORT, () => {
-        logger.info(`🚀 Server is running at http://localhost:${PORT}`);
-        logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-        logger.info(`📊 Log level: ${process.env.LOG_LEVEL || 'debug'}`);
+        logger.info(`🚀 Server running at http://localhost:${PORT}`);
+        logger.info(
+          `📝 Environment: ${process.env.NODE_ENV || "development"}`
+        );
       });
     } else {
-      logger.info('🚀 Server initialized for Vercel serverless');
-      logger.info(`📝 Environment: ${process.env.NODE_ENV || 'production'}`);
+      logger.info("🚀 Running in Vercel serverless mode");
     }
   } catch (error) {
     logger.error("Failed to start server:", error);
-    if (process.env.VERCEL !== '1') {
+
+    if (process.env.VERCEL !== "1") {
       process.exit(1);
     }
   }
 };
 
-// Start the server
+// Start server
 startServer();
 
 export default app;
