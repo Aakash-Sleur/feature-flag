@@ -33,21 +33,28 @@ const __dirname = path.dirname(__filename);
 const app: Express = express();
 
 /**
- * MongoDB Connection Cache
+ * MongoDB Connection
  */
-let isConnected = false;
-
 const connectToMongoDB = async () => {
   try {
-    if (isConnected) {
-      return;
+    // Already connected
+    if (mongoose.connection.readyState === 1) {
+      return mongoose.connection;
     }
 
-    await mongoose.connect(MONGO_URI!, mongodbOptions);
+    // Connecting already in progress
+    if (mongoose.connection.readyState === 2) {
+      return mongoose.connection;
+    }
 
-    isConnected = true;
+    const connection = await mongoose.connect(
+      MONGO_URI!,
+      mongodbOptions
+    );
 
     logger.info("Connected to MongoDB successfully 🤝");
+
+    return connection;
   } catch (err) {
     logger.error("MongoDB connection error:", err);
 
@@ -66,8 +73,7 @@ const allowedOrigins = [
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin
-    // (mobile apps, Postman, curl, server-to-server)
+    // Allow non-browser requests
     if (!origin) {
       return callback(null, true);
     }
@@ -114,6 +120,20 @@ app.use(requestLogger);
 app.use(express.static(path.join(__dirname, "public")));
 
 /**
+ * Ensure MongoDB connection
+ * IMPORTANT FOR VERCEL SERVERLESS
+ */
+app.use(async (_req, _res, next) => {
+  try {
+    await connectToMongoDB();
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * Root Route
  */
 app.get("/", (_, res) => {
@@ -154,7 +174,7 @@ app.use(
       method: req.method,
     });
 
-    // Handle CORS errors specifically
+    // Handle CORS errors
     if (error.message === "Not allowed by CORS") {
       return res.status(403).json({
         success: false,
@@ -174,34 +194,27 @@ app.use(
 );
 
 /**
- * Start Server
+ * Local development only
+ * Vercel handles server startup automatically
  */
-const startServer = async () => {
-  try {
-    // Connect ONCE during startup
-    await connectToMongoDB();
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, async () => {
+    try {
+      await connectToMongoDB();
 
-    // Vercel serverless should not call listen()
-    if (process.env.VERCEL !== "1") {
-      app.listen(PORT, () => {
-        logger.info(`🚀 Server running at http://localhost:${PORT}`);
-        logger.info(
-          `📝 Environment: ${process.env.NODE_ENV || "development"}`
-        );
-      });
-    } else {
-      logger.info("🚀 Running in Vercel serverless mode");
-    }
-  } catch (error) {
-    logger.error("Failed to start server:", error);
+      logger.info(`🚀 Server running at http://localhost:${PORT}`);
 
-    if (process.env.VERCEL !== "1") {
+      logger.info(
+        `📝 Environment: ${
+          process.env.NODE_ENV || "development"
+        }`
+      );
+    } catch (error) {
+      logger.error("Failed to connect during startup:", error);
+
       process.exit(1);
     }
-  }
-};
-
-// Start server
-startServer();
+  });
+}
 
 export default app;
