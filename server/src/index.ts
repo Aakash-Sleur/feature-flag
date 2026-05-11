@@ -148,4 +148,33 @@ app.use(
   }
 );
 
+/**
+ * Start Server (only in non-Vercel environments)
+ */
+const startServer = async () => {
+  try {
+    await connectToMongoDB();
+    
+    // Only start listening if not in Vercel serverless environment
+    if (process.env.VERCEL !== '1') {
+      app.listen(PORT, () => {
+        logger.info(`🚀 Server is running at http://localhost:${PORT}`);
+        logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger.info(`📊 Log level: ${process.env.LOG_LEVEL || 'debug'}`);
+      });
+    } else {
+      logger.info('🚀 Server initialized for Vercel serverless');
+      logger.info(`📝 Environment: ${process.env.NODE_ENV || 'production'}`);
+    }
+  } catch (error) {
+    logger.error("Failed to start server:", error);
+    if (process.env.VERCEL !== '1') {
+      process.exit(1);
+    }
+  }
+};
+
+// Start the server
+startServer();
+
 export default app;
