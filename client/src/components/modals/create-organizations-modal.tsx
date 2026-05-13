@@ -24,7 +24,9 @@ interface CreateOrganizationModalProps {
   onSuccess?: (organization: Organization) => void
 }
 
-export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalProps) {
+export function CreateOrganizationModal({
+  onSuccess,
+}: CreateOrganizationModalProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState("")
@@ -35,7 +37,7 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    
+
     if (!name.trim()) {
       setError("Organization name is required")
       return
@@ -51,31 +53,31 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
 
     try {
       // if (sendInvite) {
-        // Create organization with invite - call the invite API
-        const response = await apiClient.post("/invites/organization", {
-          organization: name.trim(),
-          email: adminEmail.trim(),
-          username: adminName.trim() || adminEmail.trim().split("@")[0],
-        })
-        
-        const data = response.data
-        
-        // Create a placeholder org for display (will be created when invite is consumed)
-        const placeholderOrg: Organization = {
-          _id: data.data.token,
-          name: name.trim(),
-          admin_id: {
-            _id: "",
-            name: adminName || adminEmail,
-            email: adminEmail,
-            role: "ORG_ADMIN",
-          },
-          status: "INVITED",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-        
-        onSuccess?.(placeholderOrg)
+      // Create organization with invite - call the invite API
+      const response = await apiClient.post("/invites/organization", {
+        organization: name.trim(),
+        email: adminEmail.trim(),
+        username: adminName.trim() || adminEmail.trim().split("@")[0],
+      })
+
+      const data = response.data
+
+      // Create a placeholder org for display (will be created when invite is consumed)
+      const placeholderOrg: Organization = {
+        _id: data.data.token,
+        name: name.trim(),
+        admin_id: {
+          _id: "",
+          name: adminName || adminEmail,
+          email: adminEmail,
+          role: "ORG_ADMIN",
+        },
+        status: "INVITED",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+
+      onSuccess?.(placeholderOrg)
       // } else {
       //   // Direct creation - requires admin_id which we don't have in this flow
       //   // This would require selecting an existing user
@@ -83,7 +85,7 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
       //   setLoading(false)
       //   return
       // }
-      
+
       setName("")
       setAdminEmail("")
       setAdminName("")
@@ -114,7 +116,7 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-lg rounded-4xl">
+      <DialogContent className="rounded-4xl sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl">
             Create Organization
@@ -125,14 +127,9 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          className="space-y-6"
-          onSubmit={handleSubmit}
-        >
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="name">
-              Organization Name
-            </Label>
+            <Label htmlFor="name">Organization Name</Label>
 
             <Input
               id="name"
@@ -161,45 +158,44 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
             </div> */}
 
             {/* {sendInvite && ( */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="adminName">
-                    Admin Name
-                  </Label>
-                  <Input
-                    id="adminName"
-                    placeholder="John Doe"
-                    className="rounded-2xl"
-                    value={adminName}
-                    onChange={(e) => setAdminName(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="adminEmail">
-                    Admin Email
-                  </Label>
-                  <Input
-                    id="adminEmail"
-                    type="email"
-                    placeholder="admin@acme.com"
-                    className="rounded-2xl"
-                    value={adminEmail}
-                    onChange={(e) => {
-                      setAdminEmail(e.target.value)
-                      setError("")
-                    }}
-                    disabled={loading}
-                  />
-                </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="adminName">Admin Name</Label>
+                <Input
+                  id="adminName"
+                  placeholder="John Doe"
+                  className="rounded-2xl"
+                  value={adminName}
+                  onChange={(e) => setAdminName(e.target.value)}
+                  disabled={loading}
+                />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="adminEmail">Admin Email</Label>
+                <Input
+                  id="adminEmail"
+                  type="email"
+                  placeholder="admin@acme.com"
+                  className="rounded-2xl"
+                  value={adminEmail}
+                  onChange={(e) => {
+                    setAdminEmail(e.target.value)
+                    setError("")
+                  }}
+                  disabled={loading}
+                />
+              </div>
+            </div>
             {/* )} */}
           </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+            <span className="font-semibold">Note:</span> Please use a valid
+            email address, as an invitation email will be sent to the specified
+            admin user.
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <DialogFooter>
             <Button
@@ -212,11 +208,7 @@ export function CreateOrganizationModal({ onSuccess }: CreateOrganizationModalPr
               Cancel
             </Button>
 
-            <Button
-              type="submit"
-              className="rounded-2xl"
-              disabled={loading}
-            >
+            <Button type="submit" className="rounded-2xl" disabled={loading}>
               {loading ? "Creating..." : "Send Invite"}
             </Button>
           </DialogFooter>
