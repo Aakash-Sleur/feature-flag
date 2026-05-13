@@ -43,8 +43,12 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as any
 
-    // Handle 401 Unauthorized
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don't handle 401 for public endpoints (login, register, etc.)
+    const publicEndpoints = ['/auth/login', '/auth/register', '/auth/register/invite', '/invites/consume']
+    const isPublicEndpoint = publicEndpoints.some(endpoint => originalRequest?.url?.includes(endpoint))
+
+    // Handle 401 Unauthorized (but not for login/register)
+    if (error.response?.status === 401 && !originalRequest._retry && !isPublicEndpoint) {
       originalRequest._retry = true
 
       try {
@@ -64,11 +68,14 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`
         return apiClient(originalRequest)
       } catch (refreshError) {
-        // Clear auth data and redirect to login
-        localStorage.removeItem("accessToken")
-        localStorage.removeItem("user")
-        localStorage.removeItem("organization")
-        window.location.href = "/login"
+        // Only redirect if we're not already on the login page
+        if (window.location.pathname !== '/login') {
+          // Clear auth data and redirect to login
+          localStorage.removeItem("accessToken")
+          localStorage.removeItem("user")
+          localStorage.removeItem("organization")
+          window.location.href = "/login"
+        }
         return Promise.reject(refreshError)
       }
     }

@@ -1,44 +1,64 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { featureFlagAPI } from "@/services/feature-flag.service";
-import { toast } from "sonner";
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { featureFlagAPI } from "@/services/feature-flag.service"
+import { toast } from "sonner"
 
 export function FeatureDemoModal() {
-  const [featureKey, setFeatureKey] = useState("");
-  const [enabled, setEnabled] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [featureKey, setFeatureKey] = useState("")
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  const handleFeatureKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFeatureKey(e.target.value)
+    // Reset the enabled state when the key changes
+    setEnabled(null)
+  }
 
   const handleSubmit = async () => {
     if (!featureKey.trim()) {
-      toast.error("Please enter a feature key");
-      return;
+      toast.error("Please enter a feature key")
+      return
     }
 
     try {
-      setLoading(true);
-      const result = await featureFlagAPI.checkByKey(featureKey.trim());
-      setEnabled(result.enabled);
-    } catch (err) {
-      console.error(err);
-      toast.error("Error checking feature");
-      setEnabled(null);
+      setLoading(true)
+      const result = await featureFlagAPI.checkByKey(featureKey.trim())
+      setEnabled(result.enabled)
+    } catch (err: any) {
+      console.error(err)
+      const errorMessage =
+        err.response?.data?.message || "Error checking feature"
+      toast.error(errorMessage)
+      setEnabled(null)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && featureKey.trim() && !loading) {
+      handleSubmit()
+    }
+  }
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    setOpen(newOpen)
     if (!newOpen) {
       // Reset state when closing
-      setFeatureKey("");
-      setEnabled(null);
-      setLoading(false);
+      setFeatureKey("")
+      setEnabled(null)
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -55,10 +75,12 @@ export function FeatureDemoModal() {
           </p>
           <Input
             type="text"
-            placeholder="Enter feature key"
+            placeholder="Enter feature key (e.g., dark_mode)"
             value={featureKey}
-            onChange={(e) => setFeatureKey(e.target.value)}
+            onChange={handleFeatureKeyChange}
+            onKeyPress={handleKeyPress}
             disabled={loading}
+            autoFocus
           />
           <Button
             onClick={handleSubmit}
@@ -68,23 +90,19 @@ export function FeatureDemoModal() {
             {loading ? "Checking..." : "Check Feature"}
           </Button>
           {enabled !== null && (
-            <div className="p-4 border rounded-lg">
-              <p className="font-medium">
-                Feature{" "}
-                <span className="font-bold">{featureKey}</span>{" "}
-                is{" "}
-                <span
-                  className={
-                    enabled ? "text-green-600" : "text-red-600"
-                  }
-                >
-                  {enabled ? "Enabled" : "Disabled"}
-                </span>
-              </p>
+            <div
+              className={`rounded-md p-3 text-sm ${
+                enabled
+                  ? "bg-green-50 text-green-700"
+                  : "bg-red-50 text-red-700"
+              }`}
+            >
+              <span className="font-medium">{featureKey}</span>{" "}
+              {enabled ? "Enabled" : "Disabled"}
             </div>
           )}
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

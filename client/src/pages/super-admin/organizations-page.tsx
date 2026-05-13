@@ -26,6 +26,7 @@ import { toaster } from "@/lib/toast"
 export function OrganizationsPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
+  const [reload, setReload] = useState(false)
 
   useEffect(() => {
     async function fetchOrganizations() {
@@ -39,11 +40,11 @@ export function OrganizationsPage() {
       }
     }
     fetchOrganizations()
-  }, [])
+  }, [reload])
 
-  const handleOrganizationCreated = (newOrg: Organization) => {
-    setOrganizations((prev) => [newOrg, ...prev])
+  const handleOrganizationCreated = () => {
     toaster.success("Invitation sent to the specified email")
+    setReload(prev => !prev)
   }
 
   return (

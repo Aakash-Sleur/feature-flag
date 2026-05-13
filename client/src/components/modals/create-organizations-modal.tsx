@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-import { Plus } from "lucide-react"
+import { Plus, Copy, Check, ExternalLink, Info } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,11 +17,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { type Organization } from "@/services/organization.service"
 import apiClient from "@/lib/api-client"
+import { toaster } from "@/lib/toast"
 
 interface CreateOrganizationModalProps {
-  onSuccess?: (organization: Organization) => void
+  onSuccess?: () => void
 }
 
 export function CreateOrganizationModal({
@@ -32,8 +32,15 @@ export function CreateOrganizationModal({
   const [name, setName] = useState("")
   const [adminEmail, setAdminEmail] = useState("")
   const [adminName, setAdminName] = useState("")
-  // const [sendInvite, setSendInvite] = useState(true)
+  const [inviteToken, setInviteToken] = useState("")
+  const [copied, setCopied] = useState(false)
   const [error, setError] = useState("")
+  const [showInviteLink, setShowInviteLink] = useState(false)
+
+  const getInviteUrl = () => {
+    const baseUrl = window.location.origin
+    return `${baseUrl}/invite/${inviteToken}`
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -44,7 +51,7 @@ export function CreateOrganizationModal({
     }
 
     if (!adminEmail.trim()) {
-      setError("Admin email is required when sending invite")
+      setError("Admin email is required")
       return
     }
 
@@ -52,7 +59,6 @@ export function CreateOrganizationModal({
     setError("")
 
     try {
-      // if (sendInvite) {
       // Create organization with invite - call the invite API
       const response = await apiClient.post("/invites/organization", {
         organization: name.trim(),
@@ -62,47 +68,53 @@ export function CreateOrganizationModal({
 
       const data = response.data
 
-      // Create a placeholder org for display (will be created when invite is consumed)
-      const placeholderOrg: Organization = {
-        _id: data.data.token,
-        name: name.trim(),
-        admin_id: {
-          _id: "",
-          name: adminName || adminEmail,
-          email: adminEmail,
-          role: "ORG_ADMIN",
-        },
-        status: "INVITED",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
+      setInviteToken(data.data.token)
+      setShowInviteLink(true)
 
-      onSuccess?.(placeholderOrg)
-      // } else {
-      //   // Direct creation - requires admin_id which we don't have in this flow
-      //   // This would require selecting an existing user
-      //   setError("Direct organization creation requires selecting an existing user. Please use invite flow.")
-      //   setLoading(false)
-      //   return
-      // }
+      onSuccess?.()
 
-      setName("")
-      setAdminEmail("")
-      setAdminName("")
-      setOpen(false)
+      toaster.success("Organization invite created successfully!")
     } catch (err: any) {
-      setError(err.message || "Failed to create organization")
+      if (err?.status == 409) {
+        setError("Organization or email already exists")
+      } else {
+        setError(err.message || "Failed to create organization")
+      }
     } finally {
       setLoading(false)
     }
   }
 
+  const handleCopyInvite = () => {
+    const inviteUrl = getInviteUrl()
+    navigator.clipboard.writeText(inviteUrl)
+    setCopied(true)
+    toaster.success("Invite link copied to clipboard!")
+
+    setTimeout(() => {
+      setCopied(false)
+    }, 2000)
+  }
+
+  const handleOpenInvite = () => {
+    const inviteUrl = getInviteUrl()
+    window.open(inviteUrl, "_blank")
+  }
+
+  const handleClose = () => {
+    setName("")
+    setAdminEmail("")
+    setAdminName("")
+    setError("")
+    setInviteToken("")
+    setShowInviteLink(false)
+    setCopied(false)
+    setOpen(false)
+  }
+
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      setName("")
-      setAdminEmail("")
-      setAdminName("")
-      setError("")
+      handleClose()
     }
     setOpen(isOpen)
   }
@@ -119,45 +131,34 @@ export function CreateOrganizationModal({
       <DialogContent className="rounded-4xl sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl">
-            Create Organization
+            {showInviteLink ? "Invite Created!" : "Create Organization"}
           </DialogTitle>
 
           <DialogDescription>
-            Create a new organization and invite an admin.
+            {showInviteLink
+              ? "Share this invite link with the organization admin"
+              : "Create a new organization and invite an admin."}
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="name">Organization Name</Label>
+        {!showInviteLink ? (
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="name">Organization Name</Label>
 
-            <Input
-              id="name"
-              placeholder="Acme Inc"
-              className="rounded-2xl"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value)
-                setError("")
-              }}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-4">
-            {/* <div className="flex items-center space-x-2">
-              <Switch
-                id="sendInvite"
-                checked={sendInvite}
-                onCheckedChange={setSendInvite}
+              <Input
+                id="name"
+                placeholder="Acme Inc"
+                className="rounded-2xl"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  setError("")
+                }}
                 disabled={loading}
               />
-              <Label htmlFor="sendInvite" className="text-sm font-normal">
-                Send invite to organization admin
-              </Label>
-            </div> */}
+            </div>
 
-            {/* {sendInvite && ( */}
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="adminName">Admin Name</Label>
@@ -187,32 +188,90 @@ export function CreateOrganizationModal({
                 />
               </div>
             </div>
-            {/* )} */}
+
+            <div className="bg-blue-50 p-3 text-sm">
+              <p className="mb-1 flex items-center font-semibold"><Info size={13} className="mr-1" />Email Invite</p>
+              <p>
+                An invitation email will be sent to the provided email address.
+                You can also copy and share the invite link manually after
+                submission.
+              </p>
+            </div>
+
+            {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-2xl"
+                onClick={() => setOpen(false)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+
+              <Button type="submit" className="rounded-2xl" disabled={loading}>
+                {loading ? "Creating..." : "Create & Send Invite"}
+              </Button>
+            </DialogFooter>
+          </form>
+        ) : (
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label>Invite Link</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={getInviteUrl()}
+                  readOnly
+                  className="rounded-2xl font-mono text-sm"
+                  onClick={(e) => e.currentTarget.select()}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0 rounded-2xl"
+                  onClick={handleCopyInvite}
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0 rounded-2xl"
+                  onClick={handleOpenInvite}
+                  title="Open invite link in new tab"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 p-3 text-sm">
+              <p className="mb-1 flex items-center font-semibold"><Info size={13} className="mr-1" />Email Invite</p>
+              <p>
+                An invitation email has been sent to the provided email address.
+                You can also copy and share the invite link manually.
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                className="w-full rounded-2xl"
+                onClick={handleClose}
+              >
+                Done
+              </Button>
+            </DialogFooter>
           </div>
-
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-            <span className="font-semibold">Note:</span> Please use a valid
-            email address, as an invitation email will be sent to the specified
-            admin user.
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-2xl"
-              onClick={() => setOpen(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-
-            <Button type="submit" className="rounded-2xl" disabled={loading}>
-              {loading ? "Creating..." : "Send Invite"}
-            </Button>
-          </DialogFooter>
-        </form>
+        )}
       </DialogContent>
     </Dialog>
   )
